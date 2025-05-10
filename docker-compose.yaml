@@ -1,0 +1,50 @@
+services:
+  php:
+    container_name: fugr-php
+    image: fugr-php:latest
+    build: .
+    environment:
+      DB_HOST: mysql
+      DB_NAME: fugr
+      DB_USER: root
+      DB_PASS: root
+    volumes:
+      - .:/var/www/fugr
+    depends_on:
+      - mysql
+    networks:
+      - fugr-network
+
+  nginx:
+    container_name: fugr-nginx
+    image: nginx:stable
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/fugr
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+    networks:
+      - fugr-network
+
+  mysql:
+    container_name: fugr-mysql
+    image: mysql:lts
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: fugr
+    volumes:
+      - fugr-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - fugr-network
+
+volumes:
+  fugr-data:
+    name: fugr-data
+
+networks:
+  fugr-network:
+    name: fugr-network
+    driver: bridge
